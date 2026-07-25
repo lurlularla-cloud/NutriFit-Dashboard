@@ -3,7 +3,8 @@
 - 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영 완료
 - 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인 완료
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
-- [페이지 2 고도화] 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 추가 완료
+- 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 추가 완료
+- [디버깅] 문법 에러 유발 인자([cite: 1]) 전량 색출 및 삭제 완료
 """
 import streamlit as st
 import pandas as pd
@@ -47,7 +48,7 @@ if "survey_data" not in st.session_state:
 # 1. 사이드바 내비게이션
 # ==========================================================
 st.sidebar.markdown("### 🧬 영양 매칭 허브")
-st.sidebar.caption("식약처 공공데이터 기반 섭취 밸런스 검증[cite: 1]")
+st.sidebar.caption("식약처 공공데이터 기반 섭취 밸런스 검증")
 menu = st.sidebar.radio("원하시는 메뉴를 선택하세요", ["🔍 맞춤형 섭취 밸런스 체크", "📊 투명한 매칭 기준 및 전성분 분석"])
 
 # ----------------------------------------------------------
@@ -63,7 +64,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 <h1 style="color: white; margin-top: 5px; font-size: 36px; font-weight: 700;">내 몸이 원하는 영양 성분 설계, 투명하게 맞추다</h1>
                 <p style="font-size: 15px; opacity: 0.85; margin-top: 10px; line-height: 1.6;">
                     과다하게 겹쳐 먹고 있지는 않나요? 복용 중인 의약품과 부딪히지는 않나요?<br>
-                    식약처 건강기능식품 마스터 데이터와 심평원 DUR 데이터를 기반으로 객관적인 영양성분 밸런스를 확인하세요.[cite: 1]
+                    식약처 건강기능식품 마스터 데이터와 심평원 DUR 데이터를 기반으로 객관적인 영양성분 밸런스를 확인하세요.
                 </p>
             </div>
             """, unsafe_allow_html=True
@@ -87,11 +88,11 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             with p1:
                 st.markdown("**STEP 01. 건강 습관 분석**")
                 if os.path.exists("images/milk_thistle.jpg"): st.image("images/milk_thistle.jpg", caption="기본 프로필/습관 분석", use_container_width=True)
-                else: st.info("📋 23개 생활변수 다각도 스캔[cite: 1]")
+                else: st.info("📋 23개 생활변수 다각도 스캔")
             with p2:
                 st.markdown("**STEP 02. 복용약 부작용 분석**")
                 if os.path.exists("images/vitaminc.jpg"): st.image("images/vitaminc.jpg", caption="의약품 상호작용 추적", use_container_width=True)
-                else: st.info("🛡️ 약물 충돌 가능성 실시간 매핑[cite: 1]")
+                else: st.info("🛡️ 약물 충돌 가능성 실시간 매핑")
             with p3:
                 st.markdown("**STEP 03. AI 맞춤 영양제 보고서**")
                 if os.path.exists("images/vitamind.jpg"): st.image("images/vitamind.jpg", caption="과다섭취 스코어 분석", use_container_width=True)
@@ -108,7 +109,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 st.markdown("---")
                 chk1 = st.checkbox("서비스 이용약관 및 개인정보 동의 (필수)", value=all_agree)
                 chk2 = st.checkbox("본인은 만 14세 이상 이용자입니다 (필수)", value=all_agree)
-                chk3 = st.checkbox("건강지표 및 기저질환 민감정보 수집 동의 (필수)", value=all_agree)[cite: 1]
+                chk3 = st.checkbox("건강지표 및 기저질환 민감정보 수집 동의 (필수)", value=all_agree)
                 
                 st.write("<br>", unsafe_allow_html=True)
                 if st.button("🚀 1:1 영양 밸런스 체크 시작하기", use_container_width=True, type="primary"):
@@ -124,30 +125,31 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         t1, t2, t3 = st.tabs(["📊 신체 & 습관 스캔", "🛡️ 안전 제한 요인", "💊 복용 중인 영양제 보관함"])
         
         with t1:
-            gender = st.radio("성별", ["남성", "여성", "응답하지 않음"])[cite: 1]
-            age_group = st.selectbox("연령대", ["20대 미만", "20대", "30대", "40대", "50대", "60대 이상"])[cite: 1]
+            gender = st.radio("성별", ["남성", "여성", "응답하지 않음"])
+            age_group = st.selectbox("연령대", ["20대 미만", "20대", "30대", "40대", "50대", "60대 이상"])
             c1, c2 = st.columns(2)
-            height = c1.number_input("키 (cm)", value=170.0)[cite: 1]
-            weight = c2.number_input("몸무게 (kg)", value=65.0)[cite: 1]
+            height = c1.number_input("키 (cm)", value=170.0)
+            weight = c2.number_input("몸무게 (kg)", value=65.0)
             bmi = weight / ((height / 100) ** 2)
-            drinking = st.selectbox("음주 빈도", ["전혀 안 함", "보통", "잦은 음주"])[cite: 1]
+            drinking = st.selectbox("음주 빈도", ["전혀 안 함", "보통", "잦은 음주"])
             
             workout = st.multiselect(
                 "운동 스타일 (복수 선택 가능)", 
-                ["안 함·체력유지재활", "저강도 걷기·스트레칭", "요가·필라테스·코어", "저항성·웨이트 근력 운동", "고강도 유산소(러닝/사이클)", "크로스핏·고강도 인터벌", "구기종목 및 격렬한 스포츠"][cite: 1]
+                ["안 함·체력유지재활", "저강도 걷기·스트레칭", "요가·필라테스·코어", "저항성·웨이트 근력 운동", "고강도 유산소(러닝/사이클)", "크로스핏·고강도 인터벌", "구기종목 및 격렬한 스포츠"]
             )
+            # 🌟 [오류 수정 완료] 라벨 에러 원인이었던[cite: 1] 텍스트 완벽 제거
             goals = st.multiselect(
                 "최우선 개선 목적 (최대 2개)", 
-                ["만성피로", "눈 건조·피로", "장 건강", "피부탄력·이너뷰티", "체지방감소·다이어트", "면역력저하", "관절보호", "수면부족·스트레스케어", "항노화·항산화", "생리불순·생리통"],[cite: 1]
+                ["만성피로", "눈 건조·피로", "장 건강", "피부탄력·이너뷰티", "체지방감소·다이어트", "면역력저하", "관절보호", "수면부족·스트레스케어", "항노화·항산화", "생리불순·생리통"],
                 max_selections=2
             )
             
         with t2:
-            allergy = st.multiselect("유발 알레르기 물질", ["갑각류", "대두", "글루텐", "유제품", "견과류", "어류", "없음"])[cite: 1]
-            user_drug = st.text_input("현재 복용중인 처방약 명칭 (DUR 데이터 확인용)", "")[cite: 1]
-            diseases = st.multiselect("과거 기저질환 및 주의 상태", ["고혈압", "당뇨", "이상지질혈증", "만성 위장질환", "혈전 관련질환-항응고제", "간·신장질환", "없음·기타"])[cite: 1]
-            pill_discomfort = st.radio("정제 제형 복용시 목 넘김 불편감 정도", ["상관없음", "매우 불편함"])[cite: 1]
-            budget = st.select_slider("선호 월 지출 예산 구조", options=["1~3만원", "3~5만원", "5~10만원", "10만원 이상"])[cite: 1]
+            allergy = st.multiselect("유발 알레르기 물질", ["갑각류", "대두", "글루텐", "유제품", "견과류", "어류", "없음"])
+            user_drug = st.text_input("현재 복용중인 처방약 명칭 (DUR 데이터 확인용)", "")
+            diseases = st.multiselect("과거 기저질환 및 주의 상태", ["고혈압", "당뇨", "이상지질혈증", "만성 위장질환", "혈전 관련질환-항응고제", "간·신장질환", "없음·기타"])
+            pill_discomfort = st.radio("정제 제형 복용시 목 넘김 불편감 정도", ["상관없음", "매우 불편함"])
+            budget = st.select_slider("선호 월 지출 예산 구조", options=["1~3만원", "3~5만원", "5~10만원", "10만원 이상"])
 
         with t3:
             st.markdown("#### 📦 현재 섭취하고 있는 영양소 종류를 선택해 주세요.")
@@ -218,15 +220,15 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             ing_str = str(row['전성분'])
             
             if "20대" in profile["age"] or "30대" in profile["age"]:
-                if "비타민B" in ing_str or "비타민C" in ing_str: score += 8.5; reasons.append("활동량이 높은 2030 피로 회복 핵심 비타민 매칭")[cite: 1]
+                if "비타민B" in ing_str or "비타민C" in ing_str: score += 8.5; reasons.append("활동량이 높은 2030 피로 회복 핵심 비타민 매칭")
             else:
-                if "오메가3" in ing_str or "루테인" in ing_str or "칼슘" in ing_str: score += 9.5; reasons.append("중장년기 혈행 개선 및 골밀도 노화 집중 보완")[cite: 1]
+                if "오메가3" in ing_str or "루테인" in ing_str or "칼슘" in ing_str: score += 9.5; reasons.append("중장년기 혈행 개선 및 골밀도 노화 집중 보완")
             
             for g in profile["goals"]:
-                if g == "만성피로" and "밀크씨슬" in ing_str: score += 7.0; reasons.append("만성피로 타겟 간 대사 활성 물질 결합")[cite: 1]
-                elif g == "장 건강" and "유산균" in ing_str: score += 6.5; reasons.append("유익균 증식을 위한 유산균 포뮬러 매칭")[cite: 1]
+                if g == "만성피로" and "밀크씨슬" in ing_str: score += 7.0; reasons.append("만성피로 타겟 간 대사 활성 물질 결합")
+                elif g == "장 건강" and "유산균" in ing_str: score += 6.5; reasons.append("유익균 증식을 위한 유산균 포뮬러 매칭")
                     
-            if profile["drinking"] == "잦은 음주" and "밀크씨슬" in ing_str: score += 5.0; reasons.append("잦은 음주 습관 방어 요소 추가 적용")[cite: 1]
+            if profile["drinking"] == "잦은 음주" and "밀크씨슬" in ing_str: score += 5.0; reasons.append("잦은 음주 습관 방어 요소 추가 적용")
             if profile["pill"] == "매우 불편함" and any(f in row['제형'] for f in ["구미", "젤리", "패치"]): score += 3.5; reasons.append("대체 특화 제형 스펙 가산")
                 
             score += (idx * 0.4)
@@ -242,11 +244,11 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         shortage_nutrients = []
         
         if "20대" in profile["age"] or "30대" in profile["age"]:
-            if not selected_nutrients["비타민B군"]: base_score -= 12; shortage_nutrients.append("비타민B군 (에너지)")[cite: 1]
-            if not selected_nutrients["비타민D"]: base_score -= 8; shortage_nutrients.append("비타민D (실내면역)")[cite: 1]
+            if not selected_nutrients["비타민B군"]: base_score -= 12; shortage_nutrients.append("비타민B군 (에너지)")
+            if not selected_nutrients["비타민D"]: base_score -= 8; shortage_nutrients.append("비타민D (실내면역)")
         else:
-            if not selected_nutrients["오메가3"]: base_score -= 15; shortage_nutrients.append("오메가3 (혈행케어)")[cite: 1]
-            if not selected_nutrients["루테인"]: base_score -= 10; shortage_nutrients.append("루테인 (안구노화)")[cite: 1]
+            if not selected_nutrients["오메가3"]: base_score -= 15; shortage_nutrients.append("오메가3 (혈행케어)")
+            if not selected_nutrients["루테인"]: base_score -= 10; shortage_nutrients.append("루테인 (안구노화)")
             
         if selected_nutrients["칼슘"] and selected_nutrients["철분"]:
             base_score -= 10
@@ -263,7 +265,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                     <h2 style="font-size: 26px; margin: 15px 0; color: white; white-space: nowrap; font-weight: 700;">
                         🎯 현재 영양제 조합 점수: {final_combination_score}점
                     </h2>
-                    <p style="font-size: 12px; opacity: 0.75; margin: 0;">보건복지부 KDRI 및 식약처 공인 알고리즘 기준 데이터셋 종합 스코어</p>
+                    <p style="font-size: 12px; opacity: 0.75; margin: 0;">보건복부 한국인 영양소 섭취기준(KDRI) 알고리즘 데이터셋 종합 스코어</p>
                 </div>
                 """, unsafe_allow_html=True
             )
@@ -299,7 +301,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         with c_r:
             st.subheader("🛡️ 안심 섭취 배제 가이드라인")
             if "혈전 관련질환-항응고제" in profile["diseases"]:
-                st.error("🚨 **항응고 물질 중복 방지 (위험):** 기저질환 확인 결과 오메가3 및 비타민K 함유 영양제는 지혈 억제 상호작용 리스크가 있어 매칭 필터에서 자동 차단 조치되었습니다.[cite: 1]")
+                st.error("🚨 **항응고 물질 중복 방지 (위험):** 기저질환 확인 결과 오메가3 및 비타민K 함유 영양제는 지혈 억제 상호작용 리스크가 있어 매칭 필터에서 자동 차단 조치되었습니다.")
             else:
                 st.success("✅ 보유 지병 및 처방 약물 대비 차단 유발 원료 없음 [안심]")
                 
@@ -312,18 +314,18 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             with st.container(border=True):
                 st.markdown(f"#### 📅 {profile['age']} 나이대별 신체 특징 분석")
                 if "20대" in profile["age"] or "30대" in profile["age"]:
-                    st.write("**특징:** 세포 에너지 소모 회전이 매우 활발하나 피로 고갈이 잦은 시기입니다.[cite: 1]")
-                    st.write("**분석:** 활력 방어선 구축을 위해 부족 영양소인 **비타민B군** 결합이 절대적으로 권장됩니다.[cite: 1]")
+                    st.write("**특징:** 세포 에너지 소모 회전이 매우 활발하나 피로 고갈이 잦은 시기입니다.")
+                    st.write("**분석:** 활력 방어선 구축을 위해 부족 영양소인 **비타민B군** 결합이 절대적으로 권장됩니다.")
                 else:
-                    st.write("**특징:** 안구 황반 변성 전조 및 혈행 장벽 리스크, 골다공증 노출 리스크가 증가합니다.[cite: 1]")
-                    st.write("**추천:** **오메가3**, **루테인**, **칼슘** 단일 섭취 보완 설계가 적합합니다.[cite: 1]")
+                    st.write("**특징:** 안구 황반 변성 전조 및 혈행 장벽 리스크, 골다공증 노출 리스크가 증가합니다.")
+                    st.write("**추천:** **오메가3**, **루테인**, **칼슘** 단일 섭취 보완 설계가 적합합니다.")
                     
         with rep_col2:
             with st.container(border=True):
                 st.markdown("#### 🏃‍♂️ 운동 스타일 및 패턴 매칭")
                 workout_str = ", ".join(profile["workout"])
                 st.write(f"**나의 스타일:** `{workout_str if workout_str else '선택 없음'}`")
-                if "근력 운동" in workout_str: st.write("**분석:** 마그네슘 등 미네랄 소모가 심해 쥐 내림 방지 스펙이 권장됩니다.[cite: 1]")
+                if "근력 운동" in workout_str: st.write("**분석:** 마그네슘 등 미네랄 소모가 심해 쥐 내림 방지 스펙이 권장됩니다.")
                 else: st.write("**분석:** 일상적인 에너지 생성을 돕는 수용성 항산화 활력 포뮬러가 유용합니다.")
 
         with rep_col3:
@@ -332,31 +334,32 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 goals_str = ", ".join(profile["goals"])
                 st.write(f"**나의 타겟 고민:** `{goals_str if goals_str else '없음'}`")
                 if profile["goals"]:
-                    for goal in profile["goals"]: st.write(f"• **{goal} 통합 관리:** 유저 지정 고민 케어를 위해 식약처 기능성 승인 성분 매칭 우선 가중치를 배정했습니다.[cite: 1]")
+                    for goal in profile["goals"]: st.write(f"• **{goal} 통합 관리:** 유저 지정 고민 케어를 위해 식약처 기능성 승인 성분 매칭 우선 가중치를 배정했습니다.")
 
         st.write("<br>", unsafe_allow_html=True)
 
         st.markdown("### ⏰ 나만을 위한 영양제 복용 타임라인 가이드")
-        st.caption("현재 유저님이 복용 중인 성분은 물론, 하단에서 **추천되는 핵심 영양 제품군의 기능 성분까지 모두 취합하여** 편성한 과학적 최적 복용 시각 타임라인입니다.[cite: 1]")
+        st.caption("현재 유저님이 복용 중인 성분은 물론, 하단에서 **추천되는 핵심 영양 제품군의 기능 성분까지 모두 취합하여** 편성한 과학적 최적 복용 시각 타임라인입니다.")
         
         timeline_elements = []
         if selected_nutrients["유산균"]:
-            timeline_elements.append({"우선순위": "🥇 1순위 (기복용)", "성분명": "프로바이오틱스 (유산균)", "복용 시간대": "아침 기상 직후 (공복)", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "위산의 영향을 최소화하여 유익균 생존율을 높이기 위해 공복 섭취가 필수적입니다.[cite: 1]"})
+            timeline_elements.append({"우선순위": "🥇 1순위 (기복용)", "성분명": "프로바이오틱스 (유산균)", "복용 시간대": "아침 기상 직후 (공복)", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "위산의 영향을 최소화하여 유익균 생존율을 높이기 위해 공복 섭취가 필수적입니다."})
             
         rec_ingredients_combined = "".join(top_5_recommended['전성분'].astype(str).tolist())
         if "비타민B" in rec_ingredients_combined or selected_nutrients["비타민B군"]:
-            timeline_elements.append({"우선순위": "🥇 1순위 (추천연계)", "성분명": "비타민B군 복합체 / 밀크씨슬", "복용 시간대": "아침 식사 직후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "비타민B군은 오전 대사를 활성화하므로 아침 식후가 좋으며 수용성이라 위장 장애를 최소화합니다.[cite: 1]"})
+            timeline_elements.append({"우선순위": "🥇 1순위 (추천연계)", "성분명": "비타민B군 복합체 / 밀크씨슬", "복용 시간대": "아침 식사 직후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "비타민B군은 오전 대사를 활성화하므로 아침 식후가 좋으며 수용성이라 위장 장애를 최소화합니다."})
         if "오메가3" in rec_ingredients_combined or "루테인" in rec_ingredients_combined or selected_nutrients["오메가3"] or selected_nutrients["루테인"]:
-            timeline_elements.append({"우선순위": "🥈 2순위 (추천연계)", "성분명": "오메가3 / 루테인 지아잔틴", "복용 시간대": "점심 또는 저녁 식사 직후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "지용성 핵심 성분으로, 식사 직후 분비되는 담즙산과 지방 성분에 의해 흡수율이 최대 3배 가량 증폭됩니다.[cite: 1]"})
+            timeline_elements.append({"우선순위": "🥈 2순위 (추천연계)", "성분명": "오메가3 / 루테인 지아잔틴", "복용 시간대": "점심 또는 저녁 식사 직후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "지용성 핵심 성분으로, 식사 직후 분비되는 담즙산과 지방 성분에 의해 흡수율이 최대 3배 가량 증폭됩니다."})
         if "마그네슘" in rec_ingredients_combined or "칼슘" in rec_ingredients_combined or selected_nutrients["마그네슘"] or selected_nutrients["칼슘"]:
-            timeline_elements.append({"우선순위": "🥉 3순위 (추천연계)", "성분명": "칼슘 / 마그네슘 미네랄 포뮬러", "복용 시간대": "취침 1시간 전", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "마그네슘은 천연 이완제 역할을 하여 신경 안정 및 수면 유도를 돕는 최적의 밤 시간대 성분입니다.[cite: 1]"})
+            timeline_elements.append({"우선순위": "🥉 3순위 (추천연계)", "성분명": "칼슘 / 마그네슘 미네랄 포뮬러", "복용 시간대": "취침 1시간 전", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "마그네슘은 천연 이완제 역할을 하여 신경 안정 및 수면 유도를 돕는 최적의 밤 시간대 성분입니다."})
             
         if not timeline_elements:
-            timeline_elements.append({"우선순위": "🥇 1순위 (추천)", "성분명": "맞춤형 비알약 종합 영양포", "복용 시간대": "아침 식사 후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "식후 섭취 시 생체 이용률이 크게 증가하는 종합 큐레이션입니다.[cite: 1]"})
+            timeline_elements.append({"우선순위": "🥇 1순위 (추천)", "성분명": "맞춤형 비알약 종합 영양포", "복용 시간대": "아침 식사 후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "식후 섭취 시 생체 이용률이 크게 증가하는 종합 큐레이션입니다."})
         st.table(pd.DataFrame(timeline_elements))
 
         st.write("---")
         st.subheader("🏆 당신을 위한 매칭 최적화 영양제 리스트 (TOP 5)")
+        st.caption("안전 필터를 통과하고 유저님의 나이, 관심사, 그리고 알약 불편 유무에 따른 대체 제형 스펙이 완벽하게 가중 매칭된 최상위 5선입니다.")
         
         if not top_5_recommended.empty:
             rank = 1
@@ -392,19 +395,18 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             st.rerun()
 
 # ----------------------------------------------------------
-# [페이지 2] 투명한 매칭 기준 및 전성분 분석 뷰 (★요청에 의한 데이터 요약 고도화)
+# [페이지 2] 투명한 매칭 기준 및 전성분 분석 뷰 
 # ----------------------------------------------------------
 elif menu == "📊 투명한 매칭 기준 및 전성분 분석":
     st.title("📊 데이터 적재 현황 및 크로스 분석실")
-    st.markdown("추천 결과 산출의 신빙성과 투명성을 제공하기 위해, 뉴트리핏 엔진이 사용하는 **공공데이터 원시 소스의 범위, 수집 시기, 데이터 크기**를 공개합니다.[cite: 1]")
+    st.markdown("추천 결과 산출의 신빙성과 투명성을 제공하기 위해, 뉴트리핏 엔진이 사용하는 **공공데이터 원시 소스의 범위, 수집 시기, 데이터 크기**를 공개합니다.")
     
     tab_1, tab_2, tab_3 = st.tabs(["🗃️ 원시 데이터 소스 명세 (범위·시기·크기)", "📦 적재 상품 풀(Pool) 통계", "📐 가중치 스코어 연산 기준 스펙"])
     
     with tab_1:
         st.subheader("📡 AI 매칭 알고리즘 연동 공공데이터베이스 정보")
-        st.markdown("유저 문진표 기반 안전 필터 작동 및 상충 관계 확인을 위해 아래의 공공기관 오픈 API 및 데이터셋을 연동 중입니다.[cite: 1]")
+        st.markdown("유저 문진표 기반 안전 필터 작동 및 상충 관계 확인을 위해 아래의 공공기관 오픈 API 및 데이터셋을 연동 중입니다.")
         
-        # 🌟 [요청 반영] 추천 시 사용하는 데이터의 명확한 범위, 시기, 행 크기 메트릭 시각화
         m1, m2, m3 = st.columns(3)
         m1.metric(label="📊 총 적재 의약품/건기식 데이터 크기", value="15,420 개 행", delta="실시간 확장 중")
         m2.metric(label="📅 데이터 동기화 최신 시기", value="2026년 06월 기준", delta="최신 규격 반영")
@@ -422,13 +424,13 @@ elif menu == "📊 투명한 매칭 기준 및 전성분 분석":
                 "이커머스 연계 상품 마스터 데이터"
             ],
             "데이터 소스 범위 및 용도": [
-                "성분별로 식약처가 공인 인정해 준 기능성(간/눈 건강 등) 매칭 근거 확인[cite: 1]",
-                "1일 섭취량 상한선·하한선 스캔 및 섭취 시 주의사항 하드 필터 연동[cite: 1]",
-                "전문 의약품 병용 금기 및 성분 상호작용 충돌 검증용 근거 확보[cite: 1]",
-                "약물의 효능, 상호작용 및 부작용 기본 정보 동기화 크로스 체크[cite: 1]",
+                "성분별로 식약처가 공인 인정해 준 기능성(간/눈 건강 등) 매칭 근거 확인",
+                "1일 섭취량 상한선·하한선 스캔 및 섭취 시 주의사항 하드 필터 연동",
+                "전문 의약품 병용 금기 및 성분 상호작용 충돌 검증용 근거 확보",
+                "약물의 효능, 상호작용 및 부작용 기본 정보 동기화 크로스 체크",
                 "알약 불편감 해소를 위한 젤리/구미/패치/분말 등 대체 제형 필터 매핑 용도"
             ],
-            "데이터 크기 (건수)",: [
+            "데이터 크기 (건수)": [
                 "약 4,200건 행",
                 "약 3,800건 행",
                 "약 5,500건 행 (압축 마스터)",
@@ -436,9 +438,9 @@ elif menu == "📊 투명한 매칭 기준 및 전성분 분석":
                 "자체 적재 마스터 풀"
             ],
             "데이터 제공/갱신 시기": [
-                "2026-06-01 규격[cite: 1]",
-                "2026-06-01 규격[cite: 1]",
-                "2026-06-01 최신판[cite: 1]",
+                "2026-06-01 규격",
+                "2026-06-01 규격",
+                "2026-06-01 최신판",
                 "2026-05-15 업데이트",
                 "실시간 수집 크롤링본"
             ]
@@ -456,15 +458,15 @@ elif menu == "📊 투명한 매칭 기준 및 전성분 분석":
             st.markdown("##### 💵 수집 제품 가격 매트릭스 대조군")
             st.dataframe(products_df[['브랜드', '제품명', '가격', '제형']], use_container_width=True)
 
-    with tab_2:
-        st.subheader("📐 식약처 가이드 기반 코어 연산 스펙 정의[cite: 1]")
+    with tab_3:
+        st.subheader("📐 식약처 가이드 기반 코어 연산 스펙 정의")
         spec_df = pd.DataFrame({
             "핵심 지표 인자": ["생애주기 (임산부)", "습관 인자 (음주)", "처방 의약품 연동", "목적성 고민 요인"],
             "제외 및 가산 처리 기준 명세": [
-                "식약처 개별인정형 정보 가이드에 의거, 태아 영향 가능 물질 고함량 제품군 강제 제외 처리[cite: 1]",
-                "식약처 기능성 원료인정 DB 기반, 간 기능 개선 실리마린 배합 제품에 가중 스코어 +4점 할당[cite: 1]",
-                "심평원 DUR 금기 마스터 매트릭스와 실시간 대조하여 병용 우려 물질 리스트에서 100% 드랍 제외[cite: 1]",
-                "기능성 원료현황 고지 원료(비타민B군 등) 타겟별 매칭 가산 스코어 +3점 할당[cite: 1]"
+                "식약처 개별인정형 정보 가이드에 의거, 태아 영향 가능 물질 고함량 제품군 강제 제외 처리",
+                "식약처 기능성 원료인정 DB 기반, 간 기능 개선 실리마린 배합 제품에 가중 스코어 +4점 할당",
+                "심평원 DUR 금기 마스터 매트릭스와 실시간 대조하여 병용 우려 물질 리스트에서 100% 드랍 제외",
+                "기능성 원료현황 고지 원료(비타민B군 등) 타겟별 매칭 가산 스코어 +3점 할당"
             ]
         })
         st.table(spec_df)
