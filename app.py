@@ -1,8 +1,9 @@
 """
-영양 매칭 허브 대시보드 (최종 통합본 - 문법 에러 수정 완료)
+영양 매칭 허브 대시보드 (최종 통합본 - 전성분 타입 에러 수정 완료)
 - 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영
 - 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 기능 연동
+- 전성분 데이터 Null 값에 따른 str 접근자 AttributeError 완벽 방어
 """
 import streamlit as st
 import pandas as pd
@@ -135,7 +136,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 "운동 스타일 (복수 선택 가능)", 
                 ["안 함·체력유지재활", "저강도 걷기·스트레칭", "요가·필라테스·코어", "저항성·웨이트 근력 운동", "고강도 유산소(러닝/사이클)", "크로스핏·고강도 인터벌", "구기종목 및 격렬한 스포츠"]
             )
-            # 문법 에러 유발 인자 삭제 완료
             goals = st.multiselect(
                 "최우선 개선 목적 (최대 2개)", 
                 ["만성피로", "눈 건조·피로", "장 건강", "피부탄력·이너뷰티", "체지방감소·다이어트", "면역력저하", "관절보호", "수면부족·스트레스케어", "항노화·항산화", "생리불순·생리통"],
@@ -363,17 +363,25 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         pool['match_score'] = 0
         pool['reason'] = "신체 균형용 매칭"
         
+        # 🛠️ [에러 해결 포인트] 타입 에러 원천 방어 (.astype(str) 연동)
         if profile["allergy"] and "없음" not in profile["allergy"]:
-            for alg in profile["allergy"]: pool = pool[~pool['전성분'].str.contains(alg, na=False)]
-        if profile["pill"] == "매우 불편함": pool = pool[pool['제형'].str.contains("구미|젤리|액상|드링크|분말·포", na=False)]
-        if "혈전 관련질환-항응고제" in profile["diseases"]: pool = pool[~pool['전성분'].str.contains("오메가3|비타민K", na=False)]
+            for alg in profile["allergy"]: 
+                pool = pool[~pool['전성분'].astype(str).str.contains(alg, na=False)]
+                
+        if profile["pill"] == "매우 불편함": 
+            pool = pool[pool['제형'].astype(str).str.contains("구미|젤리|액상|드링크|분말·포", na=False)]
+            
+        if "혈전 관련질환-항응고제" in profile["diseases"]: 
+            pool = pool[~pool['전성분'].astype(str).str.contains("오메가3|비타민K", na=False)]
             
         for idx, row in pool.iterrows():
             score = 0
             reasons = []
-            if profile["drinking"] == "잦은 음주" and "밀크씨슬" in row['전성분']:
+            # 🛠️ 여기서도 안전하게 문자열 변환 적용
+            ingredients_str = str(row['전성분'])
+            if profile["drinking"] == "잦은 음주" and "밀크씨슬" in ingredients_str:
                 score += 4; reasons.append("음주 지표 기반 간 대사 효소 방어 목적 원료 매칭")
-            if any(g in row['전성분'] for g in profile["goals"]):
+            if any(g in ingredients_str for g in profile["goals"]):
                 score += 3; reasons.append("선택한 신체 피로/고민 집중 해결 원료 타겟 매칭")
             pool.at[idx, 'match_score'] = score
             if reasons: pool.at[idx, 'reason'] = " 💡 ".join(reasons)
