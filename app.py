@@ -1,11 +1,11 @@
 """
-영양 매칭 허브 대시보드 (최종 완성본 - 이미지 파일 부재 대응 완료)
+영양 매칭 허브 대시보드 (최종 완성본)
 - 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영 완료
 - 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인 완료
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
 - 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
 - 영양제 미복용 유저(0개 체크) 시 조합 점수 0점 고정 및 권장 안내 가이드 완료
-- [오류 완벽 차단] 별도의 외부 이미지 파일 업로드 없이도 스트림릿 내장 컨테이너와 이모지를 활용해 예쁜 대시보드 그래픽 카드 구현 완료
+- [레이아웃 정밀 수정] STEP 01 문구 변경 및 픽토그램 하단 텍스트 잘림 현상 방지를 위한 한 줄 강제 CSS 패치 완료
 """
 import streamlit as st
 import pandas as pd
@@ -84,17 +84,17 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 
             st.write("<br>", unsafe_allow_html=True)
             
-            # 🌟 [디버깅 마감] 실물 이미지 파일 없이도 완벽한 카드 그래픽 레이아웃이 연출되도록 마크다운 컨테이너 빌드
+            # 🌟 [요청 반영 완료] 문구 수정 및 white-space: nowrap 처리로 잘림 현상 원천 차단
             st.markdown("### 💡 서비스 핵심 프로세스 개요")
             p1, p2, p3 = st.columns(3)
             with p1:
                 st.markdown("**STEP 01. 건강 습관 분석**")
                 st.markdown(
                     """
-                    <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 20px; text-align: center; min-height: 180px;">
-                        <span style="font-size: 50px;">📊</span>
-                        <h5 style="color: #333; margin-top: 15px; font-weight: bold;">육각형 균형 스캔</h5>
-                        <p style="font-size: 13px; color: #666; margin: 8px 0 0 0; line-height: 1.4;">나이, 성별, 활동 습관 등 23개 다각도 변수 분석</p>
+                    <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 25px 10px; text-align: center; min-height: 200px;">
+                        <span style="font-size: 45px;">📊</span>
+                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap;">내 몸 스캔</h5>
+                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4;">나이, 성별, 활동 습관 등 23개 다각도 변수 분석</p>
                     </div>
                     """, unsafe_allow_html=True
                 )
@@ -102,10 +102,10 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 st.markdown("**STEP 02. 복용약 부작용 분석**")
                 st.markdown(
                     """
-                    <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 20px; text-align: center; min-height: 180px;">
-                        <span style="font-size: 50px;">🛡️</span>
-                        <h5 style="color: #333; margin-top: 15px; font-weight: bold;">의약품 상호작용 추적</h5>
-                        <p style="font-size: 13px; color: #666; margin: 8px 0 0 0; line-height: 1.4;">심평원 DUR 연계 병용 금기 물질 및 원료 충돌 감지</p>
+                    <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 25px 10px; text-align: center; min-height: 200px;">
+                        <span style="font-size: 45px;">🛡️</span>
+                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap;">의약품 상호작용 추적</h5>
+                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4;">심평원 DUR 연계 병용 금기 물질 및 원료 충돌 감지</p>
                     </div>
                     """, unsafe_allow_html=True
                 )
@@ -113,10 +113,10 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 st.markdown("**STEP 03. AI 맞춤 영양제 보고서**")
                 st.markdown(
                     """
-                    <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 20px; text-align: center; min-height: 180px;">
-                        <span style="font-size: 50px;">📋</span>
-                        <h5 style="color: #333; margin-top: 15px; font-weight: bold;">개인별 매칭 보고서</h5>
-                        <p style="font-size: 13px; color: #666; margin: 8px 0 0 0; line-height: 1.4;">과다 섭취 유발 성분을 차단한 정밀 스펙 리포트 개방</p>
+                    <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 25px 10px; text-align: center; min-height: 200px;">
+                        <span style="font-size: 45px;">📋</span>
+                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap;">개인별 매칭 보고서</h5>
+                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4;">과다 섭취 유발 성분을 차단한 정밀 스펙 리포트 개방</p>
                     </div>
                     """, unsafe_allow_html=True
                 )
@@ -294,7 +294,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         if selected_nutrients.get("칼슘") and selected_nutrients.get("iron"):
             base_score -= 10
             
-        # 영양제를 전혀 먹지 않는 사람이라면 0점으로 강제 고정
         if not has_any_checked and not has_additional:
             final_combination_score = 0
             score_display_text = "🎯 현재 영양제 조합 점수: 0점"
