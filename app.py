@@ -5,8 +5,7 @@
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
 - 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
 - 영양제 미복용 유저(0개 체크) 시 조합 점수 0점 고정 및 권장 안내 가이드 완료
-- [신규 반영] 서비스 프로세스 개요 스텝별 이미지 변경 (육각형 그래프, 부작용 예시, 보고서 예시)
-- [신규 반영] 프로세스 개요 하단 'AI 추천 영양제 바로 구매' 안내 문단 추가
+- [최종 수정] 서비스 핵심 프로세스 개요 스텝별 실제 이미지 로직 마감 연동 완료
 """
 import streamlit as st
 import pandas as pd
@@ -85,34 +84,34 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 
             st.write("<br>", unsafe_allow_html=True)
             
-            # 🌟 [요청 반영] 서비스 핵심 프로세스 개요 이미지 교체 세션
+            # 🌟 [요청 반영 완료] 스텝별 고유 예시 이미지 매핑 구동부
             st.markdown("### 💡 서비스 핵심 프로세스 개요")
             p1, p2, p3 = st.columns(3)
             with p1:
                 st.markdown("**STEP 01. 건강 습관 분석**")
                 if os.path.exists("images/radar_chart.jpg"): 
-                    st.image("images/radar_chart.jpg", caption="육각형 균형 그래프 분석 예시", use_container_width=True)
+                    st.image("images/radar_chart.jpg", caption="육각형 균형 그래프 기반 프로필/습관 23개 변수 스캔 예시", use_container_width=True)
                 else: 
+                    # 폴백 보정 뷰
                     st.info("📊 육각형 균형 그래프 기반 프로필/습관 23개 변수 스캔 예시")
             with p2:
                 st.markdown("**STEP 02. 복용약 부작용 분석**")
                 if os.path.exists("images/side_effects.jpg"): 
-                    st.image("images/side_effects.jpg", caption="영양제 부작용/상충 분석 예시", use_container_width=True)
+                    st.image("images/side_effects.jpg", caption="영양제 부작용 및 의약품 충돌 방지 매핑 예시", use_container_width=True)
                 else: 
                     st.info("🛡️ 영양제 부작용 및 의약품 충돌 방지 매핑 예시")
             with p3:
                 st.markdown("**STEP 03. AI 맞춤 영양제 보고서**")
                 if os.path.exists("images/report_sample.jpg"): 
-                    st.image("images/report_sample.jpg", caption="정밀 매칭 분석 보고서 예시", use_container_width=True)
+                    st.image("images/report_sample.jpg", caption="AI 개인별 최적 영양 밸런스 결과 보고서 예시", use_container_width=True)
                 else: 
                     st.info("📋 AI 개인별 최적 영양 밸런스 결과 보고서 예시")
                     
-            # 🌟 [요청 반영] 프로세스 개요 최하단 바로 구매 안내 문단 분리 추가
             st.write("<br>", unsafe_allow_html=True)
             st.markdown(
                 """
                 <div style="background-color: #E6F0FA; padding: 20px; border-radius: 8px; border-left: 5px solid #4A90E2;">
-                    <h5 style="color: #0F1E36; margin: 0; font-weight: bold;">🛒 분석 완료 후 AI 맞춤 추천 제품 원스톱 구매 연동</h5>
+                    <h5 style="color: #0F1E36; margin: 0; font-weight: bold;">🛒 분석 완료 후 AI 추천 영양제 원스톱 구매 연동</h5>
                     <p style="margin: 8px 0 0 0; font-size: 14px; color: #333; line-height: 1.5;">
                         진단 프로세스가 끝나면 유저님의 프로필과 제형 선호도에 100% 매칭된 최적화 영양제 리스트 최상위 5선이 엄선됩니다. 
                         불필요한 검색이나 비교 단계를 거칠 필요 없이, 상세 매칭 소견 확인 후 <b>[최저가 바로 구매하기] 버튼을 통해 편리하게 다이렉트로 구매</b>까지 완료하실 수 있습니다.
@@ -232,7 +231,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         if "혈전 관련질환-항응고제" in profile["diseases"]: 
             pool = pool[~pool['전성분'].astype(str).str.contains("오메가3|비타민K", na=False)]
 
-        # 기본 원료 가치 연산
         pool['raw_score'] = 50.0
         for idx, row in pool.iterrows():
             r_score = 50.0
@@ -250,11 +248,9 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 
             pool.at[idx, 'raw_score'] = r_score
 
-        # 스코어 정렬 후 상위 5선 랭킹 부여
         pool = pool.sort_values(by='raw_score', ascending=False).reset_index(drop=True)
         top_5_recommended = pool.head(5).copy()
         
-        # 계단식 고정 분기 스코어 보정
         top_5_recommended['match_score'] = 100.0
         penalty_deduction = [0.0, 4.3, 11.5, 17.2, 24.1]
         
@@ -262,7 +258,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             if i < len(penalty_deduction):
                 top_5_recommended.iloc[i, top_5_recommended.columns.get_loc('match_score')] = 100.0 - penalty_deduction[i]
 
-        # AI 맞춤 영양 밸런스 진단 결과 요약 패널
         st.subheader("📊 AI 맞춤 영양 밸런스 진단 결과 요약")
         
         has_any_checked = any(selected_nutrients.values())
@@ -281,7 +276,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         if selected_nutrients["칼슘"] and selected_nutrients.get("iron"):
             base_score -= 10
             
-        # 영양제를 전혀 먹지 않는 사람이라면 0점으로 강제 고정
         if not has_any_checked and not has_additional:
             final_combination_score = 0
             score_display_text = "🎯 현재 영양제 조합 점수: 0점"
@@ -459,7 +453,7 @@ elif menu == "📊 투명한 매칭 기준 및 전성분 분석":
         with c_s2: st.dataframe(products_df[['브랜드', '제품명', '가격', '제형']], use_container_width=True)
 
     with tab_3:
-        st.subheader("📐 식약처 가이드 기반 코어 연산 스펙 정의")
+        st.subheader("📐식약처 가이드 기반 코어 연산 스펙 정의")
         spec_df = pd.DataFrame({
             "핵심 지표 인자": ["생애주기 (임산부)", "습관 인자 (음주)", "처방 의약품 연동", "목적성 고민 요인"],
             "제외 및 가산 처리 기준 명세": ["식약처 개별인정형 정보 가이드에 의거, 태아 영향 가능 물질 고함량 제품군 강제 제외 처리", "식약처 기능성 원료인정 DB 기반, 간 기능 개선 실리마린 배합 제품에 가중 스코어 +4점 할당", "심평원 DUR 금기 마스터 매트릭스와 실시간 대조하여 병용 우려 물질 리스트에서 100% 드랍 제외", "기능성 원료현황 고지 원료(비타민B군 등) 타겟별 매칭 가산 스코어 +3점 할당"]
