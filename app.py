@@ -4,7 +4,9 @@
 - 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인 완료
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
 - 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
-- [논리 오류 수정] 영양제 체크 및 추가 작성이 전혀 없는 유저의 경우 조합 점수를 0점으로 고정 처리하고, 추천 권장 안내 문구 표출 구현 완료
+- 영양제 미복용 유저(0개 체크) 시 조합 점수 0점 고정 및 권장 안내 가이드 완료
+- [신규 반영] 서비스 프로세스 개요 스텝별 이미지 변경 (육각형 그래프, 부작용 예시, 보고서 예시)
+- [신규 반영] 프로세스 개요 하단 'AI 추천 영양제 바로 구매' 안내 문단 추가
 """
 import streamlit as st
 import pandas as pd
@@ -28,7 +30,7 @@ def load_base_data():
         products = pd.read_csv("data/integrated_products.csv")
     except FileNotFoundError:
         products = pd.DataFrame({
-            '브랜드': ['옵티멈뉴트리션', '나우푸드', '락토핏', '고려은단', '솔가', '종근당', '뉴트리원', '센트룸', '네이처메이드'],
+            '브랜드': ['옵티мум뉴트리션', '나우푸드', '락토핏', '고려은단', '솔가', '종근당', '뉴트리원', '센트룸', '네이처메이드'],
             '제품명': ['골드 스탠다드 웨이 초코맛 프로틴 파우더', '실리마린 밀크씨슬 추출물', '생유산균 골드', '비타민C 1000 구미', '비타민D3 패치형', '프로메가 오메가3 액상', '루테인 지아잔틴 젤리', '멀티비타민 활력 분말포', '아연 면역 구미 스틱'],
             '전성분': ['단백질, 프로틴, 아미노산', '밀크씨슬 추출물, 실리마린, 셀룰로오스', '프로바이오틱스, 유산균, 락토바실러스', '비타민C, 아스코르브산', '비타민D, 콜레칼시페롤', '오메가3, EPA, DHA, 비타민E', '루테인, 지아잔틴, 마리골드꽃추출물', '비타민B군, 종합비타민', '아연, 글루콘산아연'],
             '제형': ['분말·포', '캡슐', '분말·포', '구미·젤리', '패치', '액상·드링크', '구미·젤리', '분말·포', '구미·젤리'],
@@ -83,20 +85,41 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 
             st.write("<br>", unsafe_allow_html=True)
             
+            # 🌟 [요청 반영] 서비스 핵심 프로세스 개요 이미지 교체 세션
             st.markdown("### 💡 서비스 핵심 프로세스 개요")
             p1, p2, p3 = st.columns(3)
             with p1:
                 st.markdown("**STEP 01. 건강 습관 분석**")
-                if os.path.exists("images/milk_thistle.jpg"): st.image("images/milk_thistle.jpg", caption="기본 프로필/습관 분석", use_container_width=True)
-                else: st.info("📋 23개 생활변수 다각도 스캔")
+                if os.path.exists("images/radar_chart.jpg"): 
+                    st.image("images/radar_chart.jpg", caption="육각형 균형 그래프 분석 예시", use_container_width=True)
+                else: 
+                    st.info("📊 육각형 균형 그래프 기반 프로필/습관 23개 변수 스캔 예시")
             with p2:
                 st.markdown("**STEP 02. 복용약 부작용 분석**")
-                if os.path.exists("images/vitaminc.jpg"): st.image("images/vitaminc.jpg", caption="의약품 상호작용 추적", use_container_width=True)
-                else: st.info("🛡️ 약물 충돌 가능성 실시간 매핑")
+                if os.path.exists("images/side_effects.jpg"): 
+                    st.image("images/side_effects.jpg", caption="영양제 부작용/상충 분석 예시", use_container_width=True)
+                else: 
+                    st.info("🛡️ 영양제 부작용 및 의약품 충돌 방지 매핑 예시")
             with p3:
                 st.markdown("**STEP 03. AI 맞춤 영양제 보고서**")
-                if os.path.exists("images/vitamind.jpg"): st.image("images/vitamind.jpg", caption="과다섭취 스코어 분석", use_container_width=True)
-                else: st.info("📊 과다섭취 및 성분 균형 시각화")
+                if os.path.exists("images/report_sample.jpg"): 
+                    st.image("images/report_sample.jpg", caption="정밀 매칭 분석 보고서 예시", use_container_width=True)
+                else: 
+                    st.info("📋 AI 개인별 최적 영양 밸런스 결과 보고서 예시")
+                    
+            # 🌟 [요청 반영] 프로세스 개요 최하단 바로 구매 안내 문단 분리 추가
+            st.write("<br>", unsafe_allow_html=True)
+            st.markdown(
+                """
+                <div style="background-color: #E6F0FA; padding: 20px; border-radius: 8px; border-left: 5px solid #4A90E2;">
+                    <h5 style="color: #0F1E36; margin: 0; font-weight: bold;">🛒 분석 완료 후 AI 맞춤 추천 제품 원스톱 구매 연동</h5>
+                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #333; line-height: 1.5;">
+                        진단 프로세스가 끝나면 유저님의 프로필과 제형 선호도에 100% 매칭된 최적화 영양제 리스트 최상위 5선이 엄선됩니다. 
+                        불필요한 검색이나 비교 단계를 거칠 필요 없이, 상세 매칭 소견 확인 후 <b>[최저가 바로 구매하기] 버튼을 통해 편리하게 다이렉트로 구매</b>까지 완료하실 수 있습니다.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True
+            )
 
         with right_col:
             st.markdown("### 🔒 안전한 분석을 위한 절차")
@@ -239,12 +262,9 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             if i < len(penalty_deduction):
                 top_5_recommended.iloc[i, top_5_recommended.columns.get_loc('match_score')] = 100.0 - penalty_deduction[i]
 
-        # ----------------------------------------------------------
         # AI 맞춤 영양 밸런스 진단 결과 요약 패널
-        # ----------------------------------------------------------
         st.subheader("📊 AI 맞춤 영양 밸런스 진단 결과 요약")
         
-        # 🛡️ [논리 오류 디버깅 포인트] 체크 개수와 주관식 칸이 모두 비어있는지 검증
         has_any_checked = any(selected_nutrients.values())
         has_additional = bool(profile["additional"].strip())
         
@@ -261,7 +281,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         if selected_nutrients["칼슘"] and selected_nutrients.get("iron"):
             base_score -= 10
             
-        # 🌟 영양제를 전혀 먹지 않는 사람이라면 0점으로 강제 고정
+        # 영양제를 전혀 먹지 않는 사람이라면 0점으로 강제 고정
         if not has_any_checked and not has_additional:
             final_combination_score = 0
             score_display_text = "🎯 현재 영양제 조합 점수: 0점"
@@ -304,7 +324,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             st.subheader("📊 현재 복용 영양소 보관함 상태계")
             st.caption("선택 및 추가 기재해 주신 복용 중인 영양 성분의 스캔 분포 지도입니다.")
             
-            # 🌟 [요청 반영] 체크가 하나도 없으면 전용 권장 가이드 문구 렌더링
             if not has_any_checked and not has_additional:
                 st.markdown("<p style='font-size:15px; color:#F0AD4E; font-weight:bold;'>• 현재 복용 중인 영양제가 없습니다. 하단의 AI 맞춤형 영양제 제안 가이드에 맞춰 섭취를 시작해 보세요!</p>", unsafe_allow_html=True)
             else:
@@ -338,7 +357,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             with st.container(border=True):
                 st.markdown("#### 🏃‍♂️ 운동 스타일 및 패턴 매칭")
                 workout_str = ", ".join(profile["workout"])
-                st.write(f"**나의 스타일:** `{workout_str if workout_str else '선택 없음'}`")
                 if "근력 운동" in workout_str or "인터벌" in workout_str: 
                     st.write("**분석:** 근육 회복 효율성 증가를 위한 고농축 아미노산 및 단백질 원료 배합 매칭률이 가장 높게 평가됩니다.")
 
@@ -346,7 +364,6 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             with st.container(border=True):
                 st.markdown("#### 🎯 관심사(건강 고민) 집중 솔루션")
                 goals_str = ", ".join(profile["goals"])
-                st.write(f"**나의 타겟 고민:** `{goals_str if goals_str else '없음'}`")
 
         st.write("<br>", unsafe_allow_html=True)
 
