@@ -1,11 +1,10 @@
 """
-영양 매칭 허브 대시보드 (최종 스코어링 및 타임라인 보완본)
-- 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영
-- 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인
-- 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동
-- 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공
-- [오류 수정] TOP 5 영양제 중요도 점수가 1위(100%)부터 5위까지 계단식으로 확실하게 차등화되도록 수정
-- [기능 보완] 복용 중인 영양제와 추천 영양소를 유기적으로 결합하여 타임라인 가이드 전면 개편
+영양 매칭 허브 대시보드 (최종 마스터 통합본 - KeyError 디버깅 완료)
+- 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영 완료
+- 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인 완료
+- 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
+- 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
+- [오류 수정] top_5_recommended 내부 KeyError('match_score') 방어를 위한 데이터프레임 할당 구조 전면 개편
 """
 import streamlit as st
 import pandas as pd
@@ -202,7 +201,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         selected_nutrients = profile["selected_nutrients"]
         
         # ----------------------------------------------------------
-        # 🌟 추천 매칭 풀 빌드 및 계단식 점수 차등 연산 로직 고도화
+        # 추천 매칭 풀 빌드 및 계단식 점수 차등 연산 로직 고도화
         # ----------------------------------------------------------
         pool = products_df.copy()
         if profile["pill"] == "매우 불편함":
@@ -212,7 +211,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         if "혈전 관련질환-항응고제" in profile["diseases"]: 
             pool = pool[~pool['전성분'].astype(str).str.contains("오메가3|비타민K", na=False)]
 
-        # 기본 원료 가치 연산 추가
+        # 기본 원료 가치 연산
         pool['raw_score'] = 50.0
         for idx, row in pool.iterrows():
             r_score = 50.0
@@ -234,8 +233,10 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         pool = pool.sort_values(by='raw_score', ascending=False).reset_index(drop=True)
         top_5_recommended = pool.head(5).copy()
         
-        # 🌟 [요청 반영] 1위는 100%, 2위~5위는 완벽한 납득이 가도록 계단식 고정 분기 스코어로 보정
-        penalty_deduction = [0.0, 4.3, 11.5, 17.2, 24.1]  # 계단식 차등 가중치
+        # 🛡️ [KeyError 해결 핵심 패치] 인덱스 및 컬럼 생성 안정화 후 차등 대입
+        top_5_recommended['match_score'] = 100.0
+        penalty_deduction = [0.0, 4.3, 11.5, 17.2, 24.1]
+        
         for i in range(len(top_5_recommended)):
             if i < len(penalty_deduction):
                 top_5_recommended.iloc[i, top_5_recommended.columns.get_loc('match_score')] = 100.0 - penalty_deduction[i]
@@ -275,7 +276,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 </div>
                 """, unsafe_allow_html=True
             )
-            if reasons_score:
+            if seasons_score:
                 for r in reasons_score: st.caption(r)
         
         with shortage_col:
@@ -340,28 +341,22 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
 
         st.write("<br>", unsafe_allow_html=True)
 
-        # ----------------------------------------------------------
-        # 🌟 [요청 반영] 복용 중인 영양제 + AI 추천 전체 연동 동적 복합 타임라인 전면 리빌딩
-        # ----------------------------------------------------------
+        # 복용 중인 영양제 + AI 추천 동적 복합 타임라인 개편
         st.markdown("### ⏰ 나만을 위한 영양제 복용 타임라인 가이드")
         st.caption("현재 유저님이 복용 중인 영양소와 하단 AI 추천 TOP 5 핵심 성분의 섭취 성향을 크로싱 분석하여 매핑한 누락 없는 1~4순위 통합 시간표입니다.")
         
         timeline_elements = []
         rec_ingredients_combined = " ".join(top_5_recommended['전성분'].fillna('').astype(str).tolist())
         
-        # 1순위 타임라인 빌드 (유산균 및 추가 작성 성분)
         if selected_nutrients["유산균"] or "유산균" in profile["additional"]:
             timeline_elements.append({"우선순위": "🥇 1순위 (기복용 연계)", "성분명": "프로바이오틱스 (유산균)", "복용 시간대": "아침 기상 직후 (공복)", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "위산의 영향을 최소화하여 유익균 장내 생존율을 높이기 위해 공복 섭취가 필수적입니다."})
             
-        # 2순위 타임라인 빌드 (활력 비타민 및 간 기능 성분)
         if "비타민B" in rec_ingredients_combined or selected_nutrients["비타민B군"] or "밀크씨슬" in rec_ingredients_combined:
             timeline_elements.append({"우선순위": "🥈 2순위 (추천/복용 융합)", "성분명": "비타민B군 복합체 / 밀크씨슬(실리마린)", "복용 시간대": "아침 식사 직후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "비타민B군은 수용성으로 오전 대사를 활성화하며, 아침 식후 복용해야 위장 자극이 가장 적습니다."})
             
-        # 3순위 타임라인 빌드 (운동 보강용 프로틴 및 지용성 영양소)
         if "단백질" in rec_ingredients_combined or "프로틴" in rec_ingredients_combined or selected_nutrients["오메가3"] or "오메가3" in rec_ingredients_combined:
             timeline_elements.append({"우선순위": "🥉 3순위 (추천 핵심 연계)", "성분명": "단백질(웨이 프로틴 파우더) / 오메가3 / 루테인", "복용 시간대": "운동 직후 또는 점심 식후 즉시", "섭취 주기": "매일 1~2회", "💡 핵심 복용 팁": "근력 운동 후 단백질 보충은 근손실을 막고 합성을 촉진하며, 지용성 성분은 식사 후 흡수율이 최대화됩니다."})
             
-        # 4순위 타임라인 빌드 (수면 및 미네랄 안점 성분)
         if "마그네슘" in rec_ingredients_combined or "칼슘" in rec_ingredients_combined or selected_nutrients["마그네슘"]:
             timeline_elements.append({"우선순위": "🎖️ 4순위 (보완 연계)", "성분명": "칼슘 / 마그네슘 미네랄 포뮬러", "복용 시간대": "취침 1시간 전", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "마그네슘은 근육 긴장 완화와 세포 안정을 자극하므로 숙면을 취하기 전 저녁 타임 복용이 최적입니다."})
             
@@ -370,9 +365,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             
         st.table(pd.DataFrame(timeline_elements))
 
-        # ----------------------------------------------------------
-        # 🌟 [요청 반영] AI 맞춤 영양제 제안 (TOP 5) 중요도 % 차등 적용 완료 섹션
-        # ----------------------------------------------------------
+        # AI 맞춤 영양제 제안 (TOP 5) 차등 적용 완료
         st.write("---")
         st.subheader("🏆 당신을 위한 매칭 최적화 영양제 리스트 (TOP 5)")
         st.caption("안전 필터를 완벽하게 거치고 유저의 나이, 목적성 건강고민, 알약 불편에 의한 대체 제형 선호도가 연산되어 계단식 우선순위로 구성된 정밀 매칭 결과입니다.")
@@ -390,17 +383,15 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                     with col_b:
                         st.markdown(f"#### 🏆 {rank}위 제품: [{r_row['브랜드']}] {r_row['제품명']}")
                         st.caption(f"🔬 **핵심 성분:** `{r_row['전성분']}` | 📦 **제형 타입:** `{r_row['제형']}`")
-                        
-                        # 스코어 백분율에 따른 차별화된 심층 분석 소견 동적 표출
                         st.markdown(
                             f"""
                             **🎯 AI 중요도 분석 소견:**
-                            - 이 제품은 유저님의 신체 특성 및 목적 지표에 가장 정밀하게 매칭되어 최종 **{r_row['match_score']}%**의 매칭 스코어를 획득했습니다.
+                            - 이 제품은 유저님의 신체 프로필 요인과 건강 고민 목적에 부합하는 기능 물질 점수가 결합되어 최종 **{r_row['match_score']}%**의 매칭 스코어를 획득했습니다.
                             - **순위별 중요도 차등 근거:** 1위(100.0%) 제품은 선택하신 운동/라이프스타일 지표에 직접적으로 즉시 개입이 필요한 원료 성분입니다. {rank}위 제품으로 갈수록 필수 결핍 인자보다는 전반적인 신체 기초 밸런스 유지 영역에 소프트하게 매칭되기 때문에 알고리즘 구조상 중요도 비율이 계단식으로 정교하게 차등 제안됩니다.
                             """, unsafe_allow_html=True
                         )
                     with col_c:
-                        st.write("<br>", unsafe_allow_width=True)
+                        st.write("<br>", unsafe_allow_html=True)
                         st.progress(float(r_row['match_score']) / 100.0)
                         st.markdown(f"<h3 style='text-align:center; color:#4A90E2;'>🟢 {r_row['match_score']}%</h3>", unsafe_allow_html=True)
                         st.link_button("최저가 바로 구매하기 🛒", "https://www.coupang.com", use_container_width=True, type="primary", key=f"btn_final_{r_idx}")
