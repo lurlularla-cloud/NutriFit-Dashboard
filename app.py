@@ -1,10 +1,10 @@
 """
-영양 매칭 허브 대시보드 (최종 마스터 통합본 - 미복용자 NameError 디버깅 완료)
+영양 매칭 허브 대시보드 (최종 마스터 통합본)
 - 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영 완료
 - 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인 완료
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
 - 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
-- [오류 수정] 영양제를 하나도 체크하지 않은 유저(미복용자) 진입 시 seasons_score NameError 현상 완벽 방어
+- [논리 오류 수정] 영양제 체크 및 추가 작성이 전혀 없는 유저의 경우 조합 점수를 0점으로 고정 처리하고, 추천 권장 안내 문구 표출 구현 완료
 """
 import streamlit as st
 import pandas as pd
@@ -187,7 +187,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 "additional": additional_supplements,
                 "selected_nutrients": {
                     "비타민D": select_vitd, "비타민B군": select_vitb, "비타민C": select_vitc, "비타민A": select_vita,
-                    "아연": select_zinc, "칼슘": select_cal, "마그네슘": select_mag, "철분": select_iron,
+                    "아연": select_zinc, "칼슘": select_cal, "magnesium": select_mag, "iron": select_iron,
                     "오메가3": select_omega, "실리마린": select_milk, "루테인": select_lutein, "코큐텐": select_coq10,
                     "유산균": select_probio, "MSM": select_msm, "콜라겐": select_collagen, "테아닌": select_theanine
                 }
@@ -244,8 +244,11 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         # ----------------------------------------------------------
         st.subheader("📊 AI 맞춤 영양 밸런스 진단 결과 요약")
         
+        # 🛡️ [논리 오류 디버깅 포인트] 체크 개수와 주관식 칸이 모두 비어있는지 검증
+        has_any_checked = any(selected_nutrients.values())
+        has_additional = bool(profile["additional"].strip())
+        
         base_score = 85
-        reasons_score = []
         shortage_nutrients = []
         
         if "20대" in profile["age"] or "30대" in profile["age"]:
@@ -255,11 +258,18 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             if not selected_nutrients["오메가3"]: base_score -= 15; shortage_nutrients.append("오메가3 (혈행케어)")
             if not selected_nutrients["루테인"]: base_score -= 10; shortage_nutrients.append("루테인 (안구노화)")
             
-        if selected_nutrients["칼슘"] and selected_nutrients["철분"]:
+        if selected_nutrients["칼슘"] and selected_nutrients.get("iron"):
             base_score -= 10
-            reasons_score.append("⚠️ 흡수 통로가 동일한 [칼슘 ➕ 철분]이 복용함에 동시 등록되어 흡수율 경합 부하가 발생 중입니다.")
             
-        final_combination_score = max(min(base_score, 100), 35)
+        # 🌟 영양제를 전혀 먹지 않는 사람이라면 0점으로 강제 고정
+        if not has_any_checked and not has_additional:
+            final_combination_score = 0
+            score_display_text = "🎯 현재 영양제 조합 점수: 0점"
+            sub_guide_text = "보건복지부 한국인 영양소 섭취기준(KDRI)에 근거한 진단이며, 복용 중인 영양제가 발견되지 않았습니다."
+        else:
+            final_combination_score = max(min(base_score, 100), 35)
+            score_display_text = f"🎯 현재 영양제 조합 점수: {final_combination_score}점"
+            sub_guide_text = "보건복지부 한국인 영양소 섭취기준(KDRI) 알고리즘 데이터셋 종합 스코어"
 
         score_col, shortage_col = st.columns([1.2, 0.8])
         with score_col:
@@ -268,14 +278,12 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 <div style="background-color: #0F1E36; padding: 25px 15px; border-radius: 10px; text-align: center; color: white;">
                     <h4 style="color: #4A90E2; margin: 0; font-size: 15px;">나이 · 관심사 · 신체 지표 결합</h4>
                     <h2 style="font-size: 24px; margin: 15px 0; color: white; white-space: nowrap; font-weight: 700;">
-                        🎯 현재 영양제 조합 점수: {final_combination_score}점
+                        {score_display_text}
                     </h2>
-                    <p style="font-size: 11px; opacity: 0.75; margin: 0;">보건복지부 한국인 영양소 섭취기준(KDRI) 알고리즘 데이터셋 종합 스코어</p>
+                    <p style="font-size: 11px; opacity: 0.75; margin: 0;">{sub_guide_text}</p>
                 </div>
                 """, unsafe_allow_html=True
             )
-            if reasons_score:
-                for r in reasons_score: st.caption(r)
         
         with shortage_col:
             st.markdown(
@@ -295,17 +303,16 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         with c_l:
             st.subheader("📊 현재 복용 영양소 보관함 상태계")
             st.caption("선택 및 추가 기재해 주신 복용 중인 영양 성분의 스캔 분포 지도입니다.")
-            any_checked = False
-            for nut, checked in selected_nutrients.items():
-                if checked:
-                    st.markdown(f"**🟢 복용 중인 영양소:** {nut}", unsafe_allow_html=True)
-                    any_checked = True
             
-            # 🛡️ [버그 패치] 아무것도 복용하지 않는 유저(미복용자) 진입 시 조건절 추가
-            if not any_checked and not profile["additional"]:
-                st.write("• 현재 규칙적으로 복용 중인 영양제가 없습니다. 하단의 AI 맞춤 성분 추천 가이드를 참고해 나만의 건강 루틴을 구축해 보세요.")
-            elif profile["additional"]:
-                st.info(f"✍️ **직접 추가 입력된 성분:** {profile['additional']}")
+            # 🌟 [요청 반영] 체크가 하나도 없으면 전용 권장 가이드 문구 렌더링
+            if not has_any_checked and not has_additional:
+                st.markdown("<p style='font-size:15px; color:#F0AD4E; font-weight:bold;'>• 현재 복용 중인 영양제가 없습니다. 하단의 AI 맞춤형 영양제 제안 가이드에 맞춰 섭취를 시작해 보세요!</p>", unsafe_allow_html=True)
+            else:
+                for nut, checked in selected_nutrients.items():
+                    if checked:
+                        st.markdown(f"**🟢 복용 중인 영양소:** {nut}", unsafe_allow_html=True)
+                if has_additional:
+                    st.info(f"✍️ **직접 추가 입력된 성분:** {profile['additional']}")
         
         with c_r:
             st.subheader("🛡️ 안심 섭취 배제 가이드라인")
@@ -350,16 +357,16 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         timeline_elements = []
         rec_ingredients_combined = " ".join(top_5_recommended['전성분'].fillna('').astype(str).tolist())
         
-        if selected_nutrients["유산균"] or "유산균" in profile["additional"]:
+        if selected_nutrients.get("유산균") or "유산균" in profile["additional"]:
             timeline_elements.append({"우선순위": "🥇 1순위 (기복용 연계)", "성분명": "프로바이오틱스 (유산균)", "복용 시간대": "아침 기상 직후 (공복)", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "위산의 영향을 최소화하여 유익균 장내 생존율을 높이기 위해 공복 섭취가 필수적입니다."})
             
-        if "비타민B" in rec_ingredients_combined or selected_nutrients["비타민B군"] or "밀크씨슬" in rec_ingredients_combined:
+        if "비타민B" in rec_ingredients_combined or selected_nutrients.get("비타민B군") or "밀크씨슬" in rec_ingredients_combined:
             timeline_elements.append({"우선순위": "🥈 2순위 (추천/복용 융합)", "성분명": "비타민B군 복합체 / 밀크씨슬(실리마린)", "복용 시간대": "아침 식사 직후", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "비타민B군은 수용성으로 오전 대사를 활성화하며, 아침 식후 복용해야 위장 자극이 가장 적습니다."})
             
-        if "단백질" in rec_ingredients_combined or "프로틴" in rec_ingredients_combined or selected_nutrients["오메가3"] or "오메가3" in rec_ingredients_combined:
+        if "단백질" in rec_ingredients_combined or "프로틴" in rec_ingredients_combined or selected_nutrients.get("오메가3") or "오메가3" in rec_ingredients_combined:
             timeline_elements.append({"우선순위": "🥉 3순위 (추천 핵심 연계)", "성분명": "단백질(웨이 프로틴 파우더) / 오메가3 / 루테인", "복용 시간대": "운동 직후 또는 점심 식후 즉시", "섭취 주기": "매일 1~2회", "💡 핵심 복용 팁": "근력 운동 후 단백질 보충은 근손실을 막고 합성을 촉진하며, 지용성 성분은 식사 후 흡수율이 최대화됩니다."})
             
-        if "마그네슘" in rec_ingredients_combined or "칼슘" in rec_ingredients_combined or selected_nutrients["마그네슘"]:
+        if "마그네슘" in rec_ingredients_combined or "칼슘" in rec_ingredients_combined or selected_nutrients.get("마그네슘"):
             timeline_elements.append({"우선순위": "🎖️ 4순위 (보완 연계)", "성분명": "칼슘 / 마그네슘 미네랄 포뮬러", "복용 시간대": "취침 1시간 전", "섭취 주기": "매일 1회", "💡 핵심 복용 팁": "마그네슘은 근육 긴장 완화와 세포 안정을 자극하므로 숙면을 취하기 전 저녁 타임 복용이 최적입니다."})
             
         if not timeline_elements:
@@ -367,7 +374,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
             
         st.table(pd.DataFrame(timeline_elements))
 
-        # AI 맞춤 영양제 제안 (TOP 5) 차등 적용 완료
+        # AI 맞춤 영양제 제안 (TOP 5)
         st.write("---")
         st.subheader("🏆 당신을 위한 매칭 최적화 영양제 리스트 (TOP 5)")
         st.caption("안전 필터를 완벽하게 거치고 유저의 나이, 목적성 건강고민, 알약 불편에 의한 대체 제형 선호도가 연산되어 계단식 우선순위로 구성된 정밀 매칭 결과입니다.")
