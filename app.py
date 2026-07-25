@@ -1,10 +1,10 @@
 """
-영양 매칭 허브 대시보드 (최종 마스터 통합본 - KeyError 디버깅 완료)
+영양 매칭 허브 대시보드 (최종 마스터 통합본 - 미복용자 NameError 디버깅 완료)
 - 1클릭 전체 동의 및 소비자 친화적 단어 순화 반영 완료
 - 섭취 영양소 종류 확장 및 바둑판(Grid) 레이아웃 리디자인 완료
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
 - 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
-- [오류 수정] top_5_recommended 내부 KeyError('match_score') 방어를 위한 데이터프레임 할당 구조 전면 개편
+- [오류 수정] 영양제를 하나도 체크하지 않은 유저(미복용자) 진입 시 seasons_score NameError 현상 완벽 방어
 """
 import streamlit as st
 import pandas as pd
@@ -200,9 +200,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         profile = st.session_state.survey_data
         selected_nutrients = profile["selected_nutrients"]
         
-        # ----------------------------------------------------------
-        # 추천 매칭 풀 빌드 및 계단식 점수 차등 연산 로직 고도화
-        # ----------------------------------------------------------
+        # 추천 매칭 풀 빌드 및 계단식 점수 차등 연산 로직
         pool = products_df.copy()
         if profile["pill"] == "매우 불편함":
             pool = pool[pool['제형'].astype(str).str.contains("구미|젤리|패치|분말|포|액상|드링크", na=False)]
@@ -233,7 +231,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
         pool = pool.sort_values(by='raw_score', ascending=False).reset_index(drop=True)
         top_5_recommended = pool.head(5).copy()
         
-        # 🛡️ [KeyError 해결 핵심 패치] 인덱스 및 컬럼 생성 안정화 후 차등 대입
+        # 계단식 고정 분기 스코어 보정
         top_5_recommended['match_score'] = 100.0
         penalty_deduction = [0.0, 4.3, 11.5, 17.2, 24.1]
         
@@ -276,7 +274,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 </div>
                 """, unsafe_allow_html=True
             )
-            if seasons_score:
+            if reasons_score:
                 for r in reasons_score: st.caption(r)
         
         with shortage_col:
@@ -302,8 +300,12 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 if checked:
                     st.markdown(f"**🟢 복용 중인 영양소:** {nut}", unsafe_allow_html=True)
                     any_checked = True
-            if not any_checked: st.write("• 현재 규칙적으로 복용 중인 체크 성분이 없습니다.")
-            if profile["additional"]: st.info(f"✍️ **직접 추가 입력된 성분:** {profile['additional']}")
+            
+            # 🛡️ [버그 패치] 아무것도 복용하지 않는 유저(미복용자) 진입 시 조건절 추가
+            if not any_checked and not profile["additional"]:
+                st.write("• 현재 규칙적으로 복용 중인 영양제가 없습니다. 하단의 AI 맞춤 성분 추천 가이드를 참고해 나만의 건강 루틴을 구축해 보세요.")
+            elif profile["additional"]:
+                st.info(f"✍️ **직접 추가 입력된 성분:** {profile['additional']}")
         
         with c_r:
             st.subheader("🛡️ 안심 섭취 배제 가이드라인")
@@ -341,7 +343,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
 
         st.write("<br>", unsafe_allow_html=True)
 
-        # 복용 중인 영양제 + AI 추천 동적 복합 타임라인 개편
+        # 복용 중인 영양제 + AI 추천 동적 복합 타임라인
         st.markdown("### ⏰ 나만을 위한 영양제 복용 타임라인 가이드")
         st.caption("현재 유저님이 복용 중인 영양소와 하단 AI 추천 TOP 5 핵심 성분의 섭취 성향을 크로싱 분석하여 매핑한 누락 없는 1~4순위 통합 시간표입니다.")
         
