@@ -5,7 +5,7 @@
 - 복용 영양소 중 상충 배합 및 불필요 성분 실시간 진단 연동 완료
 - 추천 데이터의 범위, 시기, 크기(용량/행 수) 및 출처 정보 시각화 세션 제공 완료
 - 영양제 미복용 유저(0개 체크) 시 조합 점수 0점 고정 및 권장 안내 가이드 완료
-- [레이아웃 정밀 수정] STEP 01 문구 변경 및 픽토그램 하단 텍스트 잘림 현상 방지를 위한 한 줄 강제 CSS 패치 완료
+- [레이아웃 정밀 수정] STEP 01~03 카드 내부 타이틀 및 컨텐츠 요소 중앙 정렬(text-align: center) 패치 완료
 """
 import streamlit as st
 import pandas as pd
@@ -84,7 +84,7 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 
             st.write("<br>", unsafe_allow_html=True)
             
-            # 🌟 [요청 반영 완료] 문구 수정 및 white-space: nowrap 처리로 잘림 현상 원천 차단
+            # 🌟 [요청 반영 완료] text-align: center 속성을 적극 임베딩하여 중앙 정렬 세팅 마감
             st.markdown("### 💡 서비스 핵심 프로세스 개요")
             p1, p2, p3 = st.columns(3)
             with p1:
@@ -92,9 +92,9 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 st.markdown(
                     """
                     <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 25px 10px; text-align: center; min-height: 200px;">
-                        <span style="font-size: 45px;">📊</span>
-                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap;">내 몸 스캔</h5>
-                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4;">나이, 성별, 활동 습관 등 23개 다각도 변수 분석</p>
+                        <div style="font-size: 45px; text-align: center;">📊</div>
+                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap; text-align: center;">내 몸 스캔</h5>
+                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4; text-align: center;">나이, 성별, 활동 습관 등 23개 다각도 변수 분석</p>
                     </div>
                     """, unsafe_allow_html=True
                 )
@@ -103,9 +103,9 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 st.markdown(
                     """
                     <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 25px 10px; text-align: center; min-height: 200px;">
-                        <span style="font-size: 45px;">🛡️</span>
-                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap;">의약품 상호작용 추적</h5>
-                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4;">심평원 DUR 연계 병용 금기 물질 및 원료 충돌 감지</p>
+                        <div style="font-size: 45px; text-align: center;">🛡️</div>
+                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap; text-align: center;">의약품 상호작용 추적</h5>
+                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4; text-align: center;">심평원 DUR 연계 병용 금기 물질 및 원료 충돌 감지</p>
                     </div>
                     """, unsafe_allow_html=True
                 )
@@ -114,9 +114,9 @@ if menu == "🔍 맞춤형 섭취 밸런스 체크":
                 st.markdown(
                     """
                     <div style="background-color: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 25px 10px; text-align: center; min-height: 200px;">
-                        <span style="font-size: 45px;">📋</span>
-                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap;">개인별 매칭 보고서</h5>
-                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4;">과다 섭취 유발 성분을 차단한 정밀 스펙 리포트 개방</p>
+                        <div style="font-size: 45px; text-align: center;">📋</div>
+                        <h5 style="color: #333; margin-top: 15px; font-weight: bold; font-size: 18px; white-space: nowrap; text-align: center;">개인별 매칭 보고서</h5>
+                        <p style="font-size: 13px; color: #666; margin: 12px 0 0 0; line-height: 1.4; text-align: center;">과다 섭취 유발 성분을 차단한 정밀 스펙 리포트 개방</p>
                     </div>
                     """, unsafe_allow_html=True
                 )
